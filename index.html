@@ -1,2 +1,216 @@
-<h1>Amar Website</h1>
-<p>Ami nije baniyechi</p>
+
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earn BD - Task Earning</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#f1f5f9;
+ color:#172033;
+}
+header{
+ background:#075e43;
+ color:white;
+ padding:22px 16px;
+ text-align:center;
+}
+header h2{margin:0 0 7px}
+header p{margin:0;color:#d1fae5}
+.container{
+ max-width:600px;
+ margin:auto;
+ padding:16px;
+}
+.balance{
+ background:linear-gradient(135deg,#087c52,#064e3b);
+ color:white;
+ padding:24px;
+ border-radius:15px;
+ margin-bottom:16px;
+}
+.balance h1{font-size:32px;margin:10px 0}
+.stats{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+ margin-bottom:20px;
+}
+.stat,.task,.panel{
+ background:white;
+ padding:17px;
+ border-radius:12px;
+ box-shadow:0 2px 8px #0000000a;
+}
+.stat h3{margin:5px 0;color:#087c52}
+h3{margin-top:0}
+.task{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ margin-bottom:12px;
+}
+.task p{margin:6px 0;color:#64748b;font-size:14px}
+button{
+ border:0;
+ background:#087c52;
+ color:white;
+ padding:11px 15px;
+ border-radius:8px;
+ cursor:pointer;
+ font-weight:bold;
+}
+button:disabled{background:#94a3b8}
+input{
+ width:100%;
+ padding:13px;
+ border:1px solid #cbd5e1;
+ border-radius:8px;
+ margin:8px 0 12px;
+ font-size:16px;
+}
+.panel{margin-top:18px}
+.small{font-size:13px;color:#64748b}
+#history{padding-left:20px}
+footer{text-align:center;padding:25px;color:#64748b}
+</style>
+</head>
+<body>
+
+<header>
+ <h2>💰 Earn BD</h2>
+ <p>কাজ করুন, পয়েন্ট অর্জন করুন</p>
+</header>
+
+<div class="container">
+
+ <div class="balance">
+  <p>আপনার মোট ব্যালেন্স</p>
+  <h1>৳ <span id="money">0.00</span></h1>
+  <p>মোট পয়েন্ট: <b id="points">0</b></p>
+ </div>
+
+ <div class="stats">
+  <div class="stat">
+   <small>মোট আয়</small>
+   <h3>৳ <span id="total">0.00</span></h3>
+  </div>
+  <div class="stat">
+   <small>সম্পন্ন টাস্ক</small>
+   <h3 id="done">0</h3>
+  </div>
+ </div>
+
+ <h3>📋 Available Tasks</h3>
+
+ <div id="tasks"></div>
+
+ <div class="panel">
+  <h3>💸 Withdraw Request</h3>
+  <p class="small">ডেমো: এখানে কোনো বাস্তব পেমেন্ট পাঠানো হয় না।</p>
+  <label>উইথড্র টাকার পরিমাণ</label>
+  <input type="number" id="amount" placeholder="টাকার পরিমাণ লিখুন" min="1">
+  <button onclick="withdraw()">Withdraw Request</button>
+ </div>
+
+ <div class="panel">
+  <h3>📜 Transaction History</h3>
+  <ul id="history"></ul>
+ </div>
+
+</div>
+
+<footer>
+ Earn BD © 2026 | Demo Website
+</footer>
+
+<script>
+const taskList = [
+ {id:1,name:"প্রথম ডেমো টাস্ক",desc:"টাস্কটি সম্পন্ন করুন",points:50},
+ {id:2,name:"দ্বিতীয় ডেমো টাস্ক",desc:"টাস্কটি সম্পন্ন করুন",points:100},
+ {id:3,name:"তৃতীয় ডেমো টাস্ক",desc:"টাস্কটি সম্পন্ন করুন",points:150},
+ {id:4,name:"চতুর্থ ডেমো টাস্ক",desc:"টাস্কটি সম্পন্ন করুন",points:200}
+];
+
+let data = JSON.parse(localStorage.getItem("earnBD")) || {
+ points:0,
+ total:0,
+ done:[],
+ history:[]
+};
+
+function save(){
+ localStorage.setItem("earnBD",JSON.stringify(data));
+ render();
+}
+
+function render(){
+ document.getElementById("points").innerText=data.points;
+ document.getElementById("money").innerText=(data.points/100).toFixed(2);
+ document.getElementById("total").innerText=(data.total/100).toFixed(2);
+ document.getElementById("done").innerText=data.done.length;
+
+ document.getElementById("tasks").innerHTML=taskList.map(t=>`
+  <div class="task">
+   <div>
+    <b>${t.name}</b>
+    <p>${t.desc}</p>
+    <strong>+${t.points} Points</strong>
+   </div>
+   <button onclick="completeTask(${t.id})"
+   ${data.done.includes(t.id)?"disabled":""}>
+   ${data.done.includes(t.id)?"Completed":"Complete"}
+   </button>
+  </div>
+ `).join("");
+
+ document.getElementById("history").innerHTML=
+ data.history.length
+ ? data.history.map(x=>`<li>${x}</li>`).join("")
+ : "<li>কোনো হিস্টোরি নেই</li>";
+}
+
+function completeTask(id){
+ const task=taskList.find(t=>t.id===id);
+ if(!task || data.done.includes(id))return;
+
+ data.points+=task.points;
+ data.total+=task.points;
+ data.done.push(id);
+ data.history.unshift(task.name+" - +"+task.points+" Points");
+ save();
+ alert("অভিনন্দন! পয়েন্ট যোগ হয়েছে।");
+}
+
+function withdraw(){
+ const amount=Number(document.getElementById("amount").value);
+
+ if(!Number.isFinite(amount)||amount<=0){
+  alert("সঠিক টাকার পরিমাণ লিখুন");
+  return;
+ }
+
+ if(amount*100>data.points){
+  alert("আপনার পর্যাপ্ত ব্যালেন্স নেই");
+  return;
+ }
+
+ data.points-=amount*100;
+ data.history.unshift("ডেমো Withdraw Request: ৳"+amount);
+ save();
+
+ document.getElementById("amount").value="";
+ alert("ডেমো রিকোয়েস্ট তৈরি হয়েছে। এটি বাস্তব পেমেন্ট নয়।");
+}
+
+render();
+</script>
+
+</body>
+</html>
